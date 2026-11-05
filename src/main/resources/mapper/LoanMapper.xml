@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.secure.assign.mapper.LoanMapper">
+
+    <select id="findByCustomer" resultType="edu.secure.assign.domain.Loan">
+        SELECT loan_id, customer_id, balance, status
+          FROM loan
+         <!-- WHERE customer_id = '${customerId}' -->
+         <!-- ${customerId}는 ''로 감싸야 하지만 #{customerId}는 감쌀 필요 없음 -->
+         WHERE customer_id = #{customerId}
+    </select>
+
+    <select id="findSorted" resultType="edu.secure.assign.domain.Loan">
+        SELECT loan_id, customer_id, balance, status
+          FROM loan
+         WHERE customer_id = #{customerId}
+         <!-- ORDER BY ${sortBy} -->
+         <!-- 부득이하게 ORDER BY를 쓸 경우 서버에서 허용 목록 검증 -->
+         ORDER BY #{sortBy}
+    </select>
+
+    <select id="findById" resultType="edu.secure.assign.domain.Loan">
+        SELECT loan_id, customer_id, balance, status
+          FROM loan
+         WHERE loan_id = #{loanId}
+    </select>
+
+    <select id="selectBalance" resultType="java.lang.Long">
+        SELECT balance FROM loan WHERE loan_id = #{loanId}
+    </select>
+
+    <update id="updateBalance">
+        UPDATE loan SET balance = #{balance} WHERE loan_id = #{loanId}
+    </update>
+    
+    <update id="repayConditional">
+    	UPDATE loan
+    		SET balance = balance - #{amount}
+    	WHERE loan_id = #{loanId} AND customer_id = #{customerId} AND balance >= #{amount}
+    </update>
+</mapper>
