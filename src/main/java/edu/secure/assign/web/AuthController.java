@@ -1,10 +1,7 @@
 package edu.secure.assign.web;
 
-import edu.secure.assign.domain.Customer;
-import edu.secure.assign.domain.SignupRequest;
-import edu.secure.assign.mapper.CustomerMapper;
-import edu.secure.assign.security.AesCrypto;
-import edu.secure.assign.security.PasswordHasher;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +9,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
+import edu.secure.assign.domain.Customer;
+import edu.secure.assign.domain.SignupRequest;
+import edu.secure.assign.mapper.CustomerMapper;
+import edu.secure.assign.security.AesCrypto;
+import edu.secure.assign.security.PasswordHasher;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
@@ -29,8 +31,9 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public Map<String, String> signup(@RequestBody SignupRequest req) {
-        log.info("가입 요청: {}", req);
+    public Map<String, String> signup(@RequestBody @Valid SignupRequest req) {
+//        log.info("가입 요청: {}", re q);
+    	log.info("가입 요청: customerId={}", req.customerId());
         Customer c = new Customer(req.customerId(), req.customerName(),
                 crypto.encrypt(req.rrn()), req.phone(), PasswordHasher.hash(req.password()));
         customerMapper.insert(c);
