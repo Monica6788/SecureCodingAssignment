@@ -33,7 +33,8 @@ public class Customer {
 
     @Override
     public String toString() {
-        return "Customer{customerId='" + customerId + "', customerName='" + customerName
-                + "', rrn='" + rrn + "', phone='" + phone + "', passwordHash='" + passwordHash + "'}";
+        return "Customer{customerId='" + customerId 
+        		+ "',customerName='" + customerName
+                + "', phone='" + phone + "'}";
     }
 }

@@ -34,14 +34,9 @@ public class LoanService {
 
     /** 대출 상환. 잔액이 부족하면 false */
     public boolean repay(long loanId, String customerId, long amount) {
-//        Long balance = loanMapper.selectBalance(loanId);
-//        if (balance == null || balance < amount) {
-//            return false;
-//        }
     	if (amount <= 0) {
     		throw new IllegalArgumentException("Amount should be bigger than 0.");
     	}
-//        loanMapper.updateBalance(loanId, balance - amount);
     	boolean result = loanMapper.repayConditional(loanId, customerId, amount) == 1; 
         return result;
     }
@@ -53,11 +48,11 @@ public class LoanService {
     		throw new IllegalArgumentException("Principal should be bigger than 0.");
     	}	
     	
-//        double rate = Double.parseDouble(annualRate);
     	BigDecimal annualRateBD = new BigDecimal(annualRate);
     	// .signum(): 숫자의 부호를 알려주는 BigDecimal 메서드
     	//			  음수는 -1, 0은 0, 양수는 1 반환
-    	if (annualRateBD.signum() < 0) {
+    	// x.compareTo(y): x < y이면 음수, x = y이면 0, x > y이면 양수를 반환하는 메서드 
+    	if (annualRateBD.signum() < 0 || annualRateBD.compareTo(BigDecimal.ONE) > 0) {
     		throw new IllegalArgumentException("Rate should be in closed interval [0, 1].");
     	}
 //        return (long) (principal * rate / 12);
