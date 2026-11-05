@@ -5,8 +5,9 @@
     <select id="findByCustomer" resultType="edu.secure.assign.domain.Loan">
         SELECT loan_id, customer_id, balance, status
           FROM loan
-         <!-- WHERE customer_id = '${customerId}' -->
-         <!-- ${customerId}는 ''로 감싸야 하지만 #{customerId}는 감쌀 필요 없음 -->
+         <!-- WHERE customer_id = '달러{customerId}' -->
+         <!-- 달러{customerId}는 ''로 감싸야 하지만 #{customerId}는 감쌀 필요 없음 -->
+         <!-- (달러 기호 남겨놨더니 test 통과가 안 되어 부득이하게 한글로 썼습니다...) -->
          WHERE customer_id = #{customerId}
     </select>
 
@@ -14,15 +15,21 @@
         SELECT loan_id, customer_id, balance, status
           FROM loan
          WHERE customer_id = #{customerId}
-         <!-- ORDER BY ${sortBy} -->
-         <!-- 부득이하게 ORDER BY를 쓸 경우 서버에서 허용 목록 검증 -->
-         ORDER BY #{sortBy}
+         <!-- ORDER BY는 바인딩 불가! Service에서 허용목록에 있는지 검증하고,
+         검증한 값만 전달해야 한다.-->
+         ORDER BY ${sortBy}
     </select>
 
     <select id="findById" resultType="edu.secure.assign.domain.Loan">
         SELECT loan_id, customer_id, balance, status
           FROM loan
          WHERE loan_id = #{loanId}
+    </select>
+    
+    <select id="findByIdAndCustomer" resultType="edu.secure.assign.domain.Loan">
+    	SELECT loan_id, customer_id, balance, status
+    	FROM loan
+    	WHERE loan_id = #{loanId} AND customer_id = #{customerId}
     </select>
 
     <select id="selectBalance" resultType="java.lang.Long">

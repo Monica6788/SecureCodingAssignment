@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.secure.assign.domain.Customer;
+import edu.secure.assign.domain.CustomerView;
 import edu.secure.assign.mapper.CustomerMapper;
+import edu.secure.assign.security.MaskingUtil;
 import jakarta.servlet.http.HttpSession;
 
 @RestController
@@ -24,10 +26,20 @@ public class CustomerController {
     }
 
     @GetMapping("/customers/{customerId}")
-    public Customer customer(@PathVariable String customerId, HttpSession session) {
-        LoginController.requireCustomer(session);
+    public CustomerView customer(@PathVariable String customerId, HttpSession session) {
+//        LoginController.requireCustomer(session);
+    	String me = LoginController.requireCustomer(session);
         Customer c = customerMapper.findById(customerId);
-        log.info("고객 조회: {}", c);
-        return c;
+        
+//        log.info("고객 조회: {}", c);
+        // "{}"에서 {} 자리에 뒤에 적힌 값이 순서대로 들어간다.
+        // 예: log.info("{}, {}세, {}", name, age, hobby); => 이름, nn세, 게임
+        log.info("Read Customer: customerId={}", customerId);
+        CustomerView cv = new CustomerView(c.getCustomerId(), 
+							        	   c.getCustomerName(),
+							        	   MaskingUtil.maskRrn(c.getRrn()),
+							        	   MaskingUtil.maskPhone(c.getPhone()) );
+//        return c;
+        return cv;
     }
 }

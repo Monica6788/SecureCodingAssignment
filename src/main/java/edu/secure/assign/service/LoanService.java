@@ -1,5 +1,7 @@
 package edu.secure.assign.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Set;
 
@@ -13,6 +15,8 @@ public class LoanService {
 
     private final LoanMapper loanMapper;
     
+    // Set.of("loan_id", "balance")
+    // : 정렬에 쓸 수 있는 컬럼 이름들을 수정 불가 Set으로 생성
     private static final Set<String> ALLOWED_SORT = Set.of("loan_id", "balance");
 
     public LoanService(LoanMapper loanMapper) {
@@ -30,17 +34,35 @@ public class LoanService {
 
     /** 대출 상환. 잔액이 부족하면 false */
     public boolean repay(long loanId, String customerId, long amount) {
-        Long balance = loanMapper.selectBalance(loanId);
-        if (balance == null || balance < amount) {
-            return false;
-        }
-        loanMapper.updateBalance(loanId, balance - amount);
-        return true;
+//        Long balance = loanMapper.selectBalance(loanId);
+//        if (balance == null || balance < amount) {
+//            return false;
+//        }
+    	if (amount <= 0) {
+    		throw new IllegalArgumentException("Amount should be bigger than 0.");
+    	}
+//        loanMapper.updateBalance(loanId, balance - amount);
+    	boolean result = loanMapper.repayConditional(loanId, customerId, amount) == 1; 
+        return result;
     }
 
     /** 월 이자 = 원금 × 연이율 ÷ 12 (원 단위 반올림) */
     public long monthlyInterest(long principal, String annualRate) {
-        double rate = Double.parseDouble(annualRate);
-        return (long) (principal * rate / 12);
+    	
+    	if (principal <= 0) {
+    		throw new IllegalArgumentException("Principal should be bigger than 0.");
+    	}	
+    	
+//        double rate = Double.parseDouble(annualRate);
+    	BigDecimal annualRateBD = new BigDecimal(annualRate);
+    	// .signum(): 숫자의 부호를 알려주는 BigDecimal 메서드
+    	//			  음수는 -1, 0은 0, 양수는 1 반환
+    	if (annualRateBD.signum() < 0) {
+    		throw new IllegalArgumentException("Rate should be in closed interval [0, 1].");
+    	}
+//        return (long) (principal * rate / 12);
+    	return BigDecimal.valueOf(principal).multiply(annualRateBD)
+    					 .divide(BigDecimal.valueOf(12), 0, RoundingMode.HALF_UP)
+    					 .longValueExact();
     }
 }

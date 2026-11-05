@@ -12,6 +12,9 @@ public interface LoanMapper {
     List<Loan> findSorted(@Param("customerId") String customerId, @Param("sortBy") String sortBy);
 
     Loan findById(@Param("loanId") long loanId);
+    
+    Loan findByIdAndCustomer(@Param("loanId") long loanId,
+    						 @Param("customerId") String customerId);
 
     Long selectBalance(@Param("loanId") long loanId);
 

@@ -13,6 +13,5 @@ public class CustomerView {
 	private String customerName;
 	private String rrnMasked;
 	private String phoneMasked;
-
 	
 }
