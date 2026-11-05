@@ -68,7 +68,7 @@ public class AesCrypto {
         	buf.get(iv);
         	byte[] enc = new byte[buf.remaining()];
         	buf.get(enc);
-            Cipher cipher = Cipher.getInstance("AES/GCB/NoPadding");
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 //            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(KEY.getBytes(StandardCharsets.UTF_8), "AES"));
             cipher.init(Cipher.DECRYPT_MODE, key(), new GCMParameterSpec(TAG_BITS, iv));
 //            return new String(cipher.doFinal(Base64.getDecoder().decode(token)), StandardCharsets.UTF_8);
