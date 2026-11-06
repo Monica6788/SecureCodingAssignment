@@ -13,29 +13,53 @@
 ### [1] SQL 삽입
 
 - 취약 원인: `findByCustomer`에 `WHERE customer_id = '${customerId}'`를 써서 외부 입력을 그대로 쿼리문에 이어 붙였다. 이럴 경우 URL에 `/api/loans?customerId=' OR '1' = '1'`라고 작성하면 조건이 항상 참이 되어 본인 것이 아닌 대출까지 전부 조회된다. `findSorted`에도 `ORDER BY ${sortBy}` 형태로 작성되어 입력받은 값을 검증하지 않고 그대로 사용했다. 이는 보안코딩 핵심 원칙 중 "입력값 불신"에 위배된다.
+
 - 공격 재현(수정 전): (호출한 요청과 결과)
+
 - 수정 내용:  
-    1. 수정한 파일: `LoadMapper.xml` 
+    1. 수정한 파일: `LoanMapper.xml`, `LoanService` 
     2. 변경 전/후 핵심코드:
         - 변경 전
+        **`LoanMapper.xml`**
         ```xml
         <!-- findByCustomer -->
         WHERE customer_id = '${customerId}'
+        ```
 
-        ORDER BY ${sortBy}  <!-- findSorted -->
+        **`LoanService`**
+        ```java
+        // 정렬 기준 허용값 없음
         ```
+
         - 변경 후
+        **`LoanMapper.xml`**
         ```xml
+        <!-- findByCustomer -->
+        WHERE customer_id = #{customerId}
+
+        <!-- fingByIdAndCustomer에도 적용 -->
+        WHERE loan_id = #{loanId} AND customer_id = #{customerId}
         ```
-(파일, 변경 전/후 핵심 코드)
+
+        **`LoanService`**
+        ```java
+        // Set.of("loan_id", "balance")
+        // : 정렬에 쓸 수 있는 컬럼 이름들을 수정 불가 Set으로 생성
+        private static final Set<String> ALLOWED_SORT = Set.of("loan_id", "balance");
+        ```
+
 - 확인(수정 후):
 
 ### [2] 접근 통제 (IDOR)
 
-- 취약 원인:
+- 취약 원인: 대출 항목 조회 시에 `loanId`만으로 조회하는 `findById`를 사용했다.
+
 - 공격 재현(수정 전):
+
 - 수정 내용:
+
 - 확인(수정 후):
+
 - 타인 자원 접근 시 응답 코드를 무엇으로 정했고, 그 이유는?
     1. 응답 코드: 404 (`HttpStatus.NOT_FOUND`)
     2. 이유: 403(FORBIDDEN)을 쓰면 해당 대출 항목이 **존재함**을 알려주는 셈이 되므로 공격자가 다른 사용자의 대출번호 목록을 알 수 있다. 404로 통일하여 존재 여부에 대한 정보를 제공하지 않도록 했다.
@@ -47,41 +71,57 @@
     2. 로그: 
         - `log.info("고객 조회: {}", c)`: `c`는 `Customer` 타입으로, DB의 원본 객체이다. `Customer` 클래스의 `toString()`메서드를 통해 주민번호와 비밀번호까지 로그에 기록되었다.
         - `log.info("가입 요청: {}", req)`: `req`는 가입요청 객체의 정보를 통째로 가지고 있는데, 이걸 그대로 로그에 작성하면 가입 요청 데이터가 모두 로그에 기록되었다.
+
 - 공격 재현(수정 전):
+
 - 수정 내용:
+
 - 확인(수정 후):
 
 ### [4] 에러 처리
 
 - 취약 원인:
+
 - 공격 재현(수정 전):
+
 - 수정 내용: (예외 종류별로 어떤 상태 코드/메시지를 내려주는지)
+
 - 확인(수정 후):
 
 ### [5] 입력값 검증
 
 - 취약 원인:
+
 - 수정 내용: (필드별 검증 규칙과 그렇게 정한 이유)
+
 - 확인(수정 후): (정상 요청 / 비정상 요청 각각)
 
 ### [6] 비밀번호 해시 / 암호화 / 키 관리
 
 - 취약 원인: (해시, 암호화, DB 접속 정보, 키 각각)
+
 - 수정 내용:
+
 - 확인(수정 후):
 
 ### [7] 금액 계산 / 동시성
 
 - 취약 원인: (이자 계산, 상환 금액 검증, 경쟁 조건 각각)
+
 - 공격 재현(수정 전): (음수 상환 결과, 동시 요청 결과 등)
+
 - 수정 내용:
+
 - 확인(수정 후):
 
 ### [8] XSS / CSRF
 
 - 취약 원인: 
+
 - 공격 재현(수정 전):
+
 - 수정 내용:
+
 - 확인(수정 후): (`attack/csrf-attack.html` 실행 결과 포함)
 
 ## 도구가 잡지 못한 항목 (선택)
