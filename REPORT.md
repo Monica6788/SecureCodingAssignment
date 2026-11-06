@@ -15,6 +15,8 @@
 - 취약 원인: `findByCustomer`에 `WHERE customer_id = '${customerId}'`를 써서 외부 입력을 그대로 쿼리문에 이어 붙였다. 이럴 경우 URL에 `/api/loans?customerId=' OR '1' = '1'`라고 작성하면 조건이 항상 참이 되어 본인 것이 아닌 대출까지 전부 조회된다. `findSorted`에도 `ORDER BY ${sortBy}` 형태로 작성되어 입력받은 값을 검증하지 않고 그대로 사용했다. 이는 보안코딩 핵심 원칙 중 "입력값 불신"에 위배된다.
 
 - 공격 재현(수정 전): (호출한 요청과 결과)
+    1. `GET /api/loans?customerId=' OR '1'='1`: 로그인된 사용자(C001)의 대출 항목과 C002, C003의 대출 항목이 모두 들어간 전체 목록이 조회된다.
+    2. `GET /api/loans/sorted?customerId=C001&sortBy=nosuch`: 존재하지 않는 컬럼명이 SQL에 그대로 들어가 DB 오류(`ORA-00904`, 부적합한 식별자)가 발생하고, 오류 내용이 응답에 그대로 노출된다.
 
 - 수정 내용:  
     1. 수정한 파일: `LoanMapper.xml`, `LoanService` 
@@ -28,17 +30,17 @@
 
         **`LoanService`**
         ```java
-            // 정렬 기준 허용값 없음
+            // 정렬 기준 검증 없이 그대로 전달
+            public List<Loan> findSorted(String customerId, String sortBy) {
+                return loanMapper.findSorted(customerId, sortBy);
+            }
         ```
 
         - 변경 후
         **`LoanMapper.xml`**
         ```xml
-            <!-- findByCustomer -->
+            <!-- findByCustomer: #{}는 값을 ?로 바인딩하므로 작은따옴표도 제거 -->
             WHERE customer_id = #{customerId}
-
-            <!-- fingByIdAndCustomer에도 적용 -->
-            WHERE loan_id = #{loanId} AND customer_id = #{customerId}
         ```
 
         **`LoanService`**
@@ -46,6 +48,13 @@
             // Set.of("loan_id", "balance")
             // : 정렬에 쓸 수 있는 컬럼 이름들을 수정 불가 Set으로 생성
             private static final Set<String> ALLOWED_SORT = Set.of("loan_id", "balance");
+
+            public List<Loan> findSorted(String customerId, String sortBy) {
+                if (!ALLOWED_SORT.contains(sortBy)) {
+                    throw new IllegalArgumentException("Invalid Sort Parameter");
+                }
+                return loanMapper.findSorted(customerId, sortBy);
+            }
         ```
 
 - 확인(수정 후): 
@@ -79,9 +88,8 @@
         ```java
             @GetMapping("/loans/{loanId}")
             public Loan loan(@PathVariable long loanId, HttpSession session) {
-                Loan loan = loanMapper.findById(loanId);
+                LoginController.requireCustomer(session);
                 return loanMapper.findById(loanId);
-
             }
         ```
 
@@ -320,8 +328,8 @@
     2. `customerId`가 빈 값: 400
     3. `customerId`에 `C1' OR '1'='1`: 400
     4. `customerName`에 `<script>alert(1)</script>`: 400
-    5. `rnn`이 `not-a-rrn`: 400
-    6. `phoneNumber`가 `123`: 400
+    5. `rrn`이 `not-a-rrn`: 400
+    6. `phone`이 `123`: 400
     7. `password`가 `1234`: 400
 
 ### [6] 비밀번호 해시 / 암호화 / 키 관리
@@ -488,7 +496,7 @@
     3. 동시 상환 시에 잔액보다 크게 차감된다.
 
 - 수정 내용:
-    1. 수정 파일: `LoanMapper.java`, `LoanMapper.xml`, `LoanMapper.java`
+    1. 수정 파일: `LoanService.java`, `LoanMapper.java`, `LoanMapper.xml`
     2. 변경 전/후 핵심코드:
         - 변경 전
         **`LoanService`**
