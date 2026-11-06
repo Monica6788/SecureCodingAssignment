@@ -215,7 +215,7 @@
 
 ### [4] 에러 처리
 
-- 취약 원인: 예외가 예외 클래스별로 다르게 처리되어 예외 클래스명과 메시지가 응답에 노출된다. 오류를 일으킨 쿼리문, ORA 오류 코드 등을 보고 공격자가 DB의 종류, 테이블과 컬럼 구조를 알아낼 수 있다.
+- 취약 원인: 모든 예외를 `e.toString()`으로 응답에 그대로 내보내서 예외 클래스명과 메시지가 노출된다. 오류를 일으킨 쿼리문, ORA 오류 코드 등을 보고 공격자가 DB의 종류, 테이블과 컬럼 구조를 알아낼 수 있다.
 
 - 공격 재현(수정 전): `GET /api/interest?principal=1000000&rate=abc`으로 요청 시 `java.lang.NumberFormatException: For input string: "abc"`라는 오류 메시지가 화면에 표시된다.
 
@@ -226,8 +226,15 @@
         - `IllegalArgumentException`: 상태 코드를 400으로, 메시지는 "Invalid Request."로 통일.
         - `MethodArgumentNotValidException`: 상태 코드를 400으로, 메시지는 "Invalid Request."로 통일.
         - 그 외 모든 `Exception`: 상태 코드를 500으로, 메시지를 "Request cannot be processed."로 통일하고, 예외의 식별자만 표시.
-
+    
     ```java
+        // 변경 전
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<String> handle(Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.toString());
+        }
+
+        // 변경 후
         @ExceptionHandler(ResponseStatusException.class)
         public ResponseEntity<Map<String, String>> status(ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("message", "Request cannot be processed."));

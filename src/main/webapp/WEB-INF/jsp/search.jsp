@@ -8,7 +8,8 @@
 <body>
 <h1>대출 상품 검색</h1>
 <p>c:out <span><c:out value="${q}" /></span></p>
-<p>fn:escapeXml <span>${fn: escapeXml(q)}</span></p>
+<p>fn:escapeXml <span>${fn:escapeXml(q)}</span></p>
+<p>textContent <span id="dom-result"></span></p>
 <script>
 	const params = new URLSearchParams(location.search);
 	const q = params.get("q") || "";

@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class AesCrypto {
 
-//    private static final String KEY = "0123456789abcdef";
 	private static final int IV_BYTES = 12;
 	// IV: Initialization Vector, 초기화 벡터
 	// 	   똑같은 평문을 여러 번 암호화 하더라도 매번 완전히 다른 암호문이 나오도록 해주는 난수
@@ -37,7 +36,7 @@ public class AesCrypto {
     // : 내가 만든 키를 자바 암호화 시스템이 이해할 수 있는 키 객체로 변환해주는 래퍼(Wrapper)
     private SecretKeySpec key() {
     	if (base64Key == null || base64Key.isBlank()) {
-    		throw new IllegalStateException("LAB_AES_KEY environment variable is not set.");
+    		throw new IllegalStateException("ASSIGN_AES_KEY environment variable is not set.");
     	}
     	// 
     	return new SecretKeySpec(Base64.getDecoder().decode(base64Key), "AES");
